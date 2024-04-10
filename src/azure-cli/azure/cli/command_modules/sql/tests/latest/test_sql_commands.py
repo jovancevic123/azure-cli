@@ -7249,7 +7249,40 @@ class SqlManagedInstanceLinkScenarioTest(ScenarioTest):
         # list 0 instance links
         self.cmd('sql mi link list -g {rg} --instance-name {mi}',
                     checks=[JMESPathCheck('length(@)', 0)]).get_output_in_json
+        
+class SqlManagedInstanceLinkScenarioTest2(ScenarioTest):
+    @AllowLargeResponse()
+    @ManagedInstancePreparer(parameter_name="mi")
+    def test_sql_mi_link_mgmt2(self, mi, rg):
+        link_name = 'dag'
+        primary_ag = 'ag_primary'
+        replication_mode = 'Async'
+        secondary_ag = 'ag_secondary'
+        source_endpoint = 'TCP://localhost:7022'
+        target_database = 'db'
+        self.kwargs.update({
+            'rg': rg,
+            'mi': mi,
+            'link_name': link_name,
+            'primary_ag': primary_ag,
+            'replication_mode': replication_mode,
+            'secondary_ag': secondary_ag,
+            'source_endpoint': source_endpoint,
+            'target_database': target_database,
+        })
 
+        # # Create sql managed_instance
+        # self.cmd('sql mi show -g {rg} -n {mi}',
+        #             checks=[
+        #                 JMESPathCheck('name', mi),
+        #                 JMESPathCheck('resourceGroup', rg)]).get_output_in_json()
+
+        # # no links on the instance
+        # self.cmd('sql mi link list -g {rg} --instance-name {mi}',
+        #             checks=[JMESPathCheck('length(@)', 0)])
+
+        # upsert link (copying state)
+        self.cmd('sql mi link create -g {rg} --instance-name {mi} --name {link_name} --primary-availability-group-name {primary_ag} --secondary-availability-group-name {secondary_ag} --source-endpoint {source_endpoint} --target-database {target_database} --no-wait')
 
 class SqlManagedInstanceRestoreCrossSubscriptionScenarioTest(ScenarioTest):
     @live_only()
