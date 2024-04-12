@@ -13,6 +13,7 @@ from azure.cli.core.aaz import *
 
 @register_command(
     "sql mi link failover",
+    confirmation="This operation may cause data loss if failover type is ForcedAllowDataLoss. Are you sure you want to proceed?"
 )
 class Failover(AAZCommand):
     """Failovers an instance link.
@@ -26,7 +27,7 @@ class Failover(AAZCommand):
     _aaz_info = {
         "version": "2023-08-01-preview",
         "resources": [
-            ["mgmt-plane", "/subscriptions/{}/resourcegroups/{}/providers/microsoft.sql/managedinstances/{}/distributedavailabilitygroups/{}/failover", "2023-08-01-preview"],
+            ["mgmt-plane", "/subscriptions/{}/resourcegroups/{}/providers/microsoft.sql/managedinstances/{}/distributedavailabilitygroups/{}", "2023-08-01-preview"],
         ]
     }
 
@@ -51,11 +52,13 @@ class Failover(AAZCommand):
             options=["-n", "--link", "--name", "--distributed-availability-group-name"],
             help="Name of the instance link.",
             required=True,
+            id_part="child_name_1",
         )
         _args_schema.managed_instance_name = AAZStrArg(
             options=["--mi", "--instance-name", "--managed-instance", "--managed-instance-name"],
             help="Name of Azure SQL Managed Instance.",
             required=True,
+            id_part="name",
         )
         _args_schema.resource_group = AAZResourceGroupNameArg(
             help="Name of the resource group.",
@@ -67,6 +70,7 @@ class Failover(AAZCommand):
             help="The failover type, can be ForcedAllowDataLoss or Planned.",
             required=True,
         )
+
         return cls._args_schema
 
     def _execute_operations(self):
@@ -179,11 +183,11 @@ class Failover(AAZCommand):
                 typ=AAZObjectType,
                 typ_kwargs={"flags": {"required": True, "client_flatten": True}}
             )
-            #_builder.set_prop("properties", AAZObjectType, typ_kwargs={"flags": {"client_flatten": True}})
+            _builder.set_prop("properties", AAZObjectType, typ_kwargs={"flags": {"client_flatten": True}})
 
-            #properties = _builder.get(".properties")
-            #if properties is not None:
-            _builder.set_prop("failoverType", AAZStrType, ".failover_type")
+            properties = _builder.get(".properties")
+            if properties is not None:
+                properties.set_prop("failoverType", AAZStrType, ".failover_type")
 
             return self.serialize_content(_content_value)
 

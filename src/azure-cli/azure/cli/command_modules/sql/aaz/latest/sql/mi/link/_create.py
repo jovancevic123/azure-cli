@@ -9,7 +9,6 @@
 # flake8: noqa
 
 from azure.cli.core.aaz import *
-from argparse import ArgumentError
 
 @register_command(
     "sql mi link create",
